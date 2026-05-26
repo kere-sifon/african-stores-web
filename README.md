@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# African Stores Canada
 
-## Getting Started
+Next.js 14 directory frontend for African grocery stores, markets, and specialty shops across Canada. Data is stored in MongoDB Atlas (populated by a separate Python crawler) and queried directly from Next.js Server Components and Route Handlers.
 
-First, run the development server:
+## Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS + shadcn/ui
+- Mongoose
+- Vercel deployment
+
+## Prerequisites
+
+- Node.js 20+
+- MongoDB Atlas database `african_stores` with `stores` collection (same URI as the Python agent)
+
+## Setup
 
 ```bash
+# Install dependencies (if not already done)
+npm install
+
+# Environment
+cp .env.local.example .env.local
+# Add your MONGODB_URI and NEXT_PUBLIC_SITE_URL
+
+# Verify MongoDB connection
+npm run verify:db
+
+# Development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `NEXT_PUBLIC_SITE_URL` | Public site URL (e.g. `http://localhost:3000` or production domain) |
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build (pre-renders store detail pages) |
+| `npm run start` | Start production server |
+| `npm run verify:db` | Test MongoDB connection and store count |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Pages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Route | Description |
+|-------|-------------|
+| `/` | Homepage with stats, city cards, categories, recent stores |
+| `/stores` | Filterable directory (`?city=&category=&region=&q=&page=`) |
+| `/stores/[slug]` | Store detail (slug: `name-city` kebab-case) |
+| `/cities/[city]` | All stores in a city |
 
-## Deploy on Vercel
+## API routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Route | Description |
+|-------|-------------|
+| `GET /api/stores` | Paginated stores (`city`, `category`, `region`, `q`, `page`, `limit`) |
+| `GET /api/stats` | Total stores, city counts, category counts |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy to Vercel
+
+1. Push the repo to GitHub (`kere-sifon/african-stores-web` or your fork).
+2. Import the project in [Vercel](https://vercel.com/new).
+3. Add environment variables:
+   - `MONGODB_URI` — same Atlas URI as local
+   - `NEXT_PUBLIC_SITE_URL` — your production URL (e.g. `https://your-app.vercel.app`)
+4. Deploy. The build runs `generateStaticParams` for all store detail pages.
+
+**Note:** Ensure your MongoDB Atlas IP allowlist includes `0.0.0.0/0` (or Vercel’s IP ranges) so serverless functions can connect.
+
+## Project structure
+
+```
+src/
+  app/              # Pages and API routes
+  components/       # UI components
+  lib/
+    db.ts           # Mongoose connection singleton
+    models/store.ts # Store schema + IStore type
+    stores.ts       # Data access functions
+    utils.ts        # slugify, formatPhone, category colors
+scripts/
+  verify-db.ts      # Connection smoke test
+```
+
+## GitHub
+
+Organization: [kere-sifon](https://github.com/kere-sifon)  
+Suggested repo name: `african-stores-web`
