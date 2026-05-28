@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DM_Sans, Fraunces } from "next/font/google";
 import { SiteNav } from "@/components/SiteNav";
 import "./globals.css";
@@ -52,6 +53,14 @@ export default function RootLayout({
             <p className="font-heading text-ink">African Stores Canada</p>
             <p className="mt-1">
               Celebrating African businesses across the country.
+            </p>
+            <p className="mt-3">
+              <Link
+                href="/privacy"
+                className="text-accent hover:underline font-medium"
+              >
+                Privacy Policy
+              </Link>
             </p>
           </div>
         </footer>
