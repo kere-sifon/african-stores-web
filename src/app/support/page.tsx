@@ -172,7 +172,7 @@ export default function SupportPage() {
           </li>
           <li>
             <a
-              href={GITHUB_REPO}
+              href={GITHUB_REPO + "/issues"}
               className="text-accent hover:underline break-all"
               target="_blank"
               rel="noopener noreferrer"
