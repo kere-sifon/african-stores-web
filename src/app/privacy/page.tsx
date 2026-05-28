@@ -78,7 +78,7 @@ These providers process data on our behalf under their own privacy and security 
   },
   {
     title: "Contact us",
-    body: `For privacy questions, listing corrections, or data requests, contact the project maintainers through the GitHub repository at https://github.com/kere-sifon/african-stores-web (open an issue for privacy-related inquiries).`,
+    body: `For privacy questions, listing corrections, or data requests, contact the project maintainers through the GitHub repository at https://github.com/kere-sifon/african-stores-web/issues (open an issue for privacy-related inquiries).`,
   },
 ];
 
