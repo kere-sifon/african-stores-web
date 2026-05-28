@@ -39,7 +39,7 @@ npm run audit:deps
 |----------|----------------|
 | **CI** | ESLint, TypeScript, Vitest coverage, production build |
 | **CodeQL** | SAST — static analysis for security vulnerabilities |
-| **Security** | `npm audit` (SCA) + Gitleaks secret scanning |
+| **Security** | `npm audit` (SCA) + Gitleaks CLI secret scanning |
 | **DAST** | OWASP ZAP baseline against a running build |
 
 Workflows run on pull requests and pushes to **`develop` only**. DAST uses `MONGODB_URI` from repository secrets when set (optional but recommended for full route coverage).

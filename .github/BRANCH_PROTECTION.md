@@ -100,3 +100,5 @@ Status check names must match GitHub Actions job names exactly (see workflow `jo
 | `MONGODB_URI` | DAST workflow on `develop` (optional; improves route coverage) |
 
 Add under **Settings → Secrets and variables → Actions**.
+
+**Note:** Secret scanning uses the free [Gitleaks CLI](https://github.com/gitleaks/gitleaks) in CI, not `gitleaks/gitleaks-action` (which requires a paid org license).
