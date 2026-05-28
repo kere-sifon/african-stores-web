@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+# iOS API layer conventions
+- All mobile-facing routes live under /api/v1/
+- Every response uses { data, meta, error } envelope via src/app/api/v1/_lib/response.ts
+- CORS headers must be present on all /api/v1/* routes
+- Reuse existing lib/stores.ts functions — add no new DB logic
