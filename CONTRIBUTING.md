@@ -58,6 +58,12 @@ Workflows run on pull requests and pushes to **`develop` only**. DAST uses `MONG
 
 See [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md) for step-by-step UI and `gh` CLI commands.
 
+## Dependabot
+
+Dependency PRs target **`develop`** and must pass all CI/security checks before merge. Major upgrades to **Next.js** and **React** are handled manually (Dependabot ignores semver-major for React).
+
+Do not merge Dependabot PRs into `main` directly.
+
 ## Crawler data contract
 
 The Python crawler should populate for each store:

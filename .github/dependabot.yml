@@ -2,6 +2,7 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: "/"
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -11,13 +12,27 @@ updates:
         patterns:
           - "next"
           - "eslint-config-next"
+        update-types:
+          - "minor"
+          - "patch"
       dev-tools:
         dependency-type: development
         patterns:
           - "*"
+    ignore:
+      # React 19 requires a dedicated migration with Next.js
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
