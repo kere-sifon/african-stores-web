@@ -43,8 +43,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Branching
 
-- **`main`** — production-ready; protected with required CI and security checks
-- **`develop`** — integration branch for ongoing work (create feature branches from here)
+- **`develop`** — integration branch; all CI and security checks must pass here
+- **`main`** — production branch for Vercel (promote from `develop`; no CI gates on `main`)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full workflow and quality gates.
 

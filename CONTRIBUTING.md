@@ -4,12 +4,12 @@
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | Production-ready code only. Protected; merges require passing checks. |
-| `develop` | Integration branch for features, fixes, and security hardening. |
+| `develop` | Integration branch. **All CI and security checks run here** and must pass before merge. |
+| `main` | Production branch for Vercel. No CI gates on `main` — only promoted code from `develop`. |
 
-**Flow:** feature branch → PR into `develop` → after validation, PR `develop` → `main` for releases.
+**Flow:** `feature/*` → PR into `develop` (checks required) → PR `develop` → `main` when ready to deploy.
 
-Do not push directly to `main`.
+Do not push directly to `main` or `develop`.
 
 ## Local setup
 
@@ -42,25 +42,21 @@ npm run audit:deps
 | **Security** | `npm audit` (SCA) + Gitleaks secret scanning |
 | **DAST** | OWASP ZAP baseline against a running build |
 
-All workflows run on PRs to `develop` and `main`. DAST uses `MONGODB_URI` from repository secrets when set (optional but recommended for full route coverage).
+Workflows run on pull requests and pushes to **`develop` only**. DAST uses `MONGODB_URI` from repository secrets when set (optional but recommended for full route coverage).
+
+### Required checks on `develop` (must pass to merge)
+
+- `Lint, typecheck, test, build`
+- `npm audit (SCA)`
+- `Gitleaks (secrets)`
+- `Analyze JavaScript/TypeScript`
+- `OWASP ZAP baseline scan`
+
+`main` does not run these gates — open a release PR from `develop` after they have already passed.
 
 ## Enable branch protection on GitHub
 
-After pushing `develop`, configure in **Settings → Branches**:
-
-### `main`
-
-- Require pull request before merging
-- Require approvals: 1
-- Require status checks: `Lint, typecheck, test, build`, `npm audit (SCA)`, `Gitleaks (secrets)`, `Analyze JavaScript/TypeScript`, `OWASP ZAP baseline scan`
-- Require branches to be up to date
-- Do not allow bypassing
-
-### `develop`
-
-- Require pull request before merging
-- Require status checks: `Lint, typecheck, test, build`, `npm audit (SCA)`, `Gitleaks (secrets)`
-- Recommended: also require CodeQL on PRs to `develop`
+See [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md) for step-by-step UI and `gh` CLI commands.
 
 ## Crawler data contract
 

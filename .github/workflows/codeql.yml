@@ -2,9 +2,9 @@ name: CodeQL (SAST)
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
   pull_request:
-    branches: [main, develop]
+    branches: [develop]
   schedule:
     - cron: "0 6 * * 1"
 
