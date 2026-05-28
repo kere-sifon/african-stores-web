@@ -51,7 +51,7 @@ We review requests as capacity allows and cannot guarantee every submission will
     title: "Contact support",
     body: `The best way to reach us is through GitHub:
 
-${GITHUB_REPO}
+${GITHUB_REPO}/issues/new
 
 Open a new issue and choose a short title describing your question (for example: "Wrong address for store in Toronto" or "App search not working"). We aim to respond when we can; this is a community directory project, not a 24/7 call centre.`,
   },
@@ -115,15 +115,7 @@ export default function SupportPage() {
         <h1 className="mt-2 font-heading text-3xl font-bold text-ink sm:text-4xl">
           Support
         </h1>
-        <p className="mt-4 text-ink/90 leading-relaxed">
-          Use this URL for App Store support registration:{" "}
-          <Link
-            href="/support"
-            className="font-medium text-accent hover:underline break-all"
-          >
-            {siteUrl}/support
-          </Link>
-        </p>
+       
       </header>
 
       <div className="mt-10 space-y-10">
