@@ -54,7 +54,13 @@ export default function RootLayout({
             <p className="mt-1">
               Celebrating African businesses across the country.
             </p>
-            <p className="mt-3">
+            <p className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+              <Link
+                href="/support"
+                className="text-accent hover:underline font-medium"
+              >
+                Support
+              </Link>
               <Link
                 href="/privacy"
                 className="text-accent hover:underline font-medium"
