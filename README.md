@@ -91,12 +91,15 @@ Details: [SECURITY.md](./SECURITY.md), [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Deploy to Vercel
 
+Production deploys **only from `main`**. The repo includes [`vercel.json`](vercel.json) so pushes to `develop` or feature branches do not trigger Vercel builds.
+
 1. Push the repo to GitHub (`kere-sifon/african-stores-web` or your fork).
 2. Import the project in [Vercel](https://vercel.com/new).
-3. Add environment variables:
+3. Set **Production Branch** to `main` (Settings → Git).
+4. Add environment variables:
    - `MONGODB_URI` — same Atlas URI as local
    - `NEXT_PUBLIC_SITE_URL` — your production URL (e.g. `https://your-app.vercel.app`)
-4. Deploy. The build runs `generateStaticParams` for all store detail pages.
+5. Merge `develop` → `main` when ready to release; only that merge deploys production.
 
 **Note:** Ensure your MongoDB Atlas IP allowlist includes `0.0.0.0/0` (or Vercel’s IP ranges) so serverless functions can connect.
 
