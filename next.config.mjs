@@ -27,6 +27,15 @@ const securityHeaders = [
   },
 ];
 
+const apiV1CorsHeaders = [
+  { key: "Access-Control-Allow-Origin", value: "*" },
+  { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
+  {
+    key: "Access-Control-Allow-Headers",
+    value: "Content-Type, Authorization",
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: __dirname,
@@ -36,6 +45,10 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/api/v1/:path*",
+        headers: apiV1CorsHeaders,
       },
     ];
   },
