@@ -16,6 +16,7 @@ export interface IStore {
   description: string | null;
   products_and_specialties: string[];
   source_url: string | null;
+  slug: string | null;
   created_at: Date;
 }
 
@@ -34,6 +35,7 @@ interface IStoreDocument extends Document {
   description: string | null;
   products_and_specialties: string[];
   source_url: string | null;
+  slug?: string | null;
   created_at: Date;
   name_lower?: string;
   city_lower?: string;
@@ -55,6 +57,7 @@ const storeSchema = new Schema<IStoreDocument>(
     description: { type: String, default: null },
     products_and_specialties: { type: [String], default: [] },
     source_url: { type: String, default: null },
+    slug: { type: String, default: null, sparse: true },
     created_at: { type: Date, default: Date.now },
     name_lower: { type: String, select: false },
     city_lower: { type: String, select: false },
@@ -85,8 +88,8 @@ const storeSchema = new Schema<IStoreDocument>(
   }
 );
 
-storeSchema.index({ city_lower: 1 });
-storeSchema.index({ name_lower: 1 });
+storeSchema.index({ slug: 1 }, { unique: true, sparse: true });
+storeSchema.index({ name_lower: 1, city_lower: 1 });
 storeSchema.index({ category: 1 });
 storeSchema.index({ created_at: -1 });
 
@@ -118,6 +121,7 @@ export function toIStore(doc: IStoreDocument | Record<string, unknown>): IStore 
     description: raw.description ?? null,
     products_and_specialties: raw.products_and_specialties ?? [],
     source_url: raw.source_url ?? null,
+    slug: raw.slug ?? null,
     created_at: raw.created_at,
   };
 }

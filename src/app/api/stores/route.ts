@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
 
     const { stores, total } = await getStores(
       { cities, categories, regions, q },
-      page
+      page,
+      limit
     );
 
     const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       total,
       page,
       totalPages,
-      limit: STORES_PER_PAGE,
+      limit,
     });
   } catch (error) {
     console.error("GET /api/stores:", error);
