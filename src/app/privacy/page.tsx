@@ -126,14 +126,7 @@ export default function PrivacyPage() {
         </p>
         <p className="mt-4 text-ink/90 leading-relaxed">
           This page describes how African Stores Canada handles information
-          when you use our website and iOS app. Use this URL for App Store
-          Connect privacy policy registration:{" "}
-          <Link
-            href="/privacy"
-            className="font-medium text-accent hover:underline break-all"
-          >
-            {siteUrl}/privacy
-          </Link>
+          when you use our website and iOS app. 
         </p>
       </header>
 
