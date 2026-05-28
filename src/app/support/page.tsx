@@ -51,7 +51,7 @@ We review requests as capacity allows and cannot guarantee every submission will
     title: "Contact support",
     body: `The best way to reach us is through GitHub:
 
-${GITHUB_REPO}/issues/new
+${GITHUB_REPO}/issues
 
 Open a new issue and choose a short title describing your question (for example: "Wrong address for store in Toronto" or "App search not working"). We aim to respond when we can; this is a community directory project, not a 24/7 call centre.`,
   },
