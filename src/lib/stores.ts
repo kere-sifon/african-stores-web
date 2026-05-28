@@ -67,7 +67,7 @@ function withContactableFilter(
   return { $and: [query, CONTACTABLE_STORE_FILTER] };
 }
 
-function buildFilterQuery(filters: StoreFilters): Record<string, unknown> {
+export function buildFilterQuery(filters: StoreFilters): Record<string, unknown> {
   const query: Record<string, unknown> = {};
 
   if (filters.cities && filters.cities.length > 0) {
@@ -98,18 +98,20 @@ function buildFilterQuery(filters: StoreFilters): Record<string, unknown> {
 
 export async function getStores(
   filters: StoreFilters = {},
-  page = 1
+  page = 1,
+  limit = STORES_PER_PAGE
 ): Promise<{ stores: IStore[]; total: number }> {
   await connectDB();
 
   const query = buildFilterQuery(filters);
-  const skip = Math.max(0, (page - 1) * STORES_PER_PAGE);
+  const pageSize = Math.min(50, Math.max(1, limit));
+  const skip = Math.max(0, (page - 1) * pageSize);
 
   const [docs, total] = await Promise.all([
     Store.find(query)
       .sort({ name: 1 })
       .skip(skip)
-      .limit(STORES_PER_PAGE)
+      .limit(pageSize)
       .lean(),
     Store.countDocuments(query),
   ]);
@@ -120,51 +122,59 @@ export async function getStores(
   };
 }
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function getStoreBySlug(slug: string): Promise<IStore | null> {
   await connectDB();
 
   const select =
-    "+name_lower +city_lower name city category region_focus address province postal_code phone website email hours description products_and_specialties source_url created_at";
+    "+name_lower +city_lower name city category region_focus address province postal_code phone website email hours description products_and_specialties source_url created_at slug";
 
-  const allStores = await Store.find(withContactableFilter({}))
+  const normalizedSlug = slug.trim().toLowerCase();
+
+  const byStoredSlug = await Store.findOne(
+    withContactableFilter({ slug: normalizedSlug })
+  )
     .select(select)
     .lean();
 
-  const match = allStores.find((doc) => {
-    const city = doc.city ?? "";
-    return slugify(doc.name, city) === slug;
-  });
-
-  if (match && hasRequiredContactInfo(match)) {
-    return toIStore(match);
+  if (byStoredSlug && hasRequiredContactInfo(byStoredSlug)) {
+    return toIStore(byStoredSlug);
   }
 
   const { name, city } = deslugify(slug);
-  const byLower = await Store.findOne(
-    withContactableFilter({
-      name_lower: name.toLowerCase(),
-      city_lower: city.toLowerCase(),
-    })
-  )
-    .select(select)
-    .lean();
 
-  if (byLower && hasRequiredContactInfo(byLower)) {
-    return toIStore(byLower);
+  if (name && city) {
+    const byLower = await Store.findOne(
+      withContactableFilter({
+        name_lower: name.toLowerCase(),
+        city_lower: city.toLowerCase(),
+      })
+    )
+      .select(select)
+      .lean();
+
+    if (byLower && hasRequiredContactInfo(byLower)) {
+      return toIStore(byLower);
+    }
+
+    const byNameCity = await Store.findOne(
+      withContactableFilter({
+        name: new RegExp(`^${escapeRegex(name)}$`, "i"),
+        city: new RegExp(`^${escapeRegex(city)}$`, "i"),
+      })
+    )
+      .select(select)
+      .lean();
+
+    if (byNameCity && hasRequiredContactInfo(byNameCity)) {
+      return toIStore(byNameCity);
+    }
   }
 
-  const byNameCity = await Store.findOne(
-    withContactableFilter({
-      name: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
-      city: new RegExp(`^${city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
-    })
-  )
-    .select(select)
-    .lean();
-
-  return byNameCity && hasRequiredContactInfo(byNameCity)
-    ? toIStore(byNameCity)
-    : null;
+  return null;
 }
 
 export async function getStats(): Promise<{
@@ -239,7 +249,11 @@ export async function getRegions(): Promise<string[]> {
 export async function getStoresByCity(city: string): Promise<IStore[]> {
   await connectDB();
 
-  const docs = await Store.find(withContactableFilter({ city }))
+  const docs = await Store.find(
+    withContactableFilter({
+      city: new RegExp(`^${escapeRegex(city.trim())}$`, "i"),
+    })
+  )
     .sort({ name: 1 })
     .lean();
   return docs.map((doc) => toIStore(doc));

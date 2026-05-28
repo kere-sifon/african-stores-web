@@ -91,7 +91,7 @@ export default async function HomePage() {
             {stats.cities.map(({ city, count }) => (
               <Link
                 key={city}
-                href={`/stores?city=${encodeURIComponent(city)}`}
+                href={`/cities/${encodeURIComponent(city)}`}
                 className="group rounded-xl border border-border-warm bg-card-warm p-5 transition-all hover:border-forest/40 hover:shadow-md"
               >
                 <MapPin className="h-5 w-5 text-forest mb-2" aria-hidden />

@@ -50,20 +50,29 @@ async function StoresContent({
     ) || 1
   );
 
-  const [result, cities, categories, regions] = await Promise.all([
-    getStores(
-      {
-        cities: filters.cities,
-        categories: filters.categories,
-        regions: filters.regions,
-        q,
-      },
-      page
-    ),
-    getCities(),
-    getCategories(),
-    getRegions(),
-  ]);
+  let result = { stores: [] as Awaited<ReturnType<typeof getStores>>["stores"], total: 0 };
+  let cities: string[] = [];
+  let categories: string[] = [];
+  let regions: string[] = [];
+
+  try {
+    [result, cities, categories, regions] = await Promise.all([
+      getStores(
+        {
+          cities: filters.cities,
+          categories: filters.categories,
+          regions: filters.regions,
+          q,
+        },
+        page
+      ),
+      getCities(),
+      getCategories(),
+      getRegions(),
+    ]);
+  } catch {
+    // Degraded empty directory when database is unavailable (e.g. CI DAST)
+  }
 
   const searchKey = JSON.stringify({ filters, q, page });
 

@@ -4,7 +4,7 @@ Next.js 14 directory frontend for African grocery stores, markets, and specialty
 
 ## Stack
 
-- Next.js 14 (App Router)
+- Next.js 15 (App Router)
 - TypeScript
 - Tailwind CSS + shadcn/ui
 - Mongoose
@@ -41,6 +41,13 @@ Open [http://localhost:3000](http://localhost:3000).
 | `MONGODB_URI` | MongoDB Atlas connection string |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL (e.g. `http://localhost:3000` or production domain) |
 
+## Branching
+
+- **`develop`** — integration branch; all CI and security checks must pass here
+- **`main`** — production branch for Vercel (promote from `develop`; no CI gates on `main`)
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full workflow and quality gates.
+
 ## Scripts
 
 | Command | Description |
@@ -48,7 +55,23 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run dev` | Start dev server |
 | `npm run build` | Production build (pre-renders store detail pages) |
 | `npm run start` | Start production server |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
+| `npm run test` | Unit tests (Vitest) |
+| `npm run audit:deps` | Fail on high+ npm audit findings |
 | `npm run verify:db` | Test MongoDB connection and store count |
+
+## Security & CI
+
+| Check | Tool |
+|-------|------|
+| Lint, types, tests, build | GitHub Actions `ci.yml` |
+| SAST | CodeQL |
+| SCA | `npm audit` |
+| Secret scan | Gitleaks |
+| DAST | OWASP ZAP baseline |
+
+Details: [SECURITY.md](./SECURITY.md), [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Pages
 
@@ -95,4 +118,6 @@ scripts/
 ## GitHub
 
 Organization: [kere-sifon](https://github.com/kere-sifon)  
-Suggested repo name: `african-stores-web`
+Repository: `african-stores-web`
+
+Push `develop` and enable branch protection using [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md).
