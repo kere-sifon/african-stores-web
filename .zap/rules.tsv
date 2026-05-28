@@ -1,0 +1,12 @@
+# ZAP baseline rules for african-stores-web
+# Format: RULE_ID	ACTION	(NAME)
+# ACTION: IGNORE | FAIL | WARN | INFO
+
+# Sec-Fetch-Dest is a client request header, not set on HTTP responses
+90005	IGNORE	Sec-Fetch-Dest Header is Missing
+
+# Dynamic SSR/API routes are intentionally not cacheable
+10049	IGNORE	Non-Storable Content
+
+# COEP is not required for this directory app; require-corp breaks Next.js assets
+90004	IGNORE	Cross-Origin-Embedder-Policy Header Missing or Invalid
