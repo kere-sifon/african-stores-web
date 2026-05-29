@@ -17,6 +17,12 @@ describe("slugify", () => {
     );
   });
 
+  it("strips punctuation from names in slugs", () => {
+    expect(slugify("ID Love Restaurant & Bar", "Toronto")).toBe(
+      "id-love-restaurant-bar-toronto"
+    );
+  });
+
   it("handles name-only when city is empty", () => {
     expect(slugify("Test Store", "")).toBe("test-store");
   });
