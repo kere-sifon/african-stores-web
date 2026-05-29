@@ -14,7 +14,7 @@ import {
   getAllStoreSlugs,
   getStoreBySlug,
 } from "@/lib/stores";
-import { formatPhone } from "@/lib/utils";
+import { formatHoursPreview, formatPhone, hasStoreHours } from "@/lib/utils";
 
 export const dynamic = "force-static";
 export const dynamicParams = true;
@@ -95,6 +95,13 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
           </p>
         )}
 
+        {hasStoreHours(store.hours) && (
+          <p className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
+            <Clock className="h-4 w-4 shrink-0 text-forest" aria-hidden />
+            <span>{formatHoursPreview(store.hours!)}</span>
+          </p>
+        )}
+
         {websiteUrl && (
           <a
             href={websiteUrl}
@@ -152,14 +159,14 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
           </div>
         )}
 
-        {store.hours && (
+        {hasStoreHours(store.hours) && (
           <div className="rounded-xl border border-border-warm bg-card-warm p-4 sm:col-span-2">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-              Hours
+              Opening hours
             </h2>
             <p className="text-ink whitespace-pre-line flex gap-2">
               <Clock className="h-4 w-4 shrink-0 text-forest mt-0.5" aria-hidden />
-              {store.hours}
+              <span>{store.hours!.trim()}</span>
             </p>
           </div>
         )}
