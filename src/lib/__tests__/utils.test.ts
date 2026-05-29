@@ -36,6 +36,13 @@ describe("deslugify", () => {
       city: "Toronto",
     });
   });
+
+  it("parses multi-word cities like Niagara Falls", () => {
+    expect(deslugify("abeni-african-food-niagara-falls")).toEqual({
+      name: "Abeni African Food",
+      city: "Niagara Falls",
+    });
+  });
 });
 
 describe("parseFilterParam", () => {
