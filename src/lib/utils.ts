@@ -121,6 +121,35 @@ export function getCategoryColor(category: string): string {
   return categoryColors[category] ?? categoryColors.Other;
 }
 
+export function hasStoreHours(hours: string | null | undefined): boolean {
+  return Boolean(hours?.trim());
+}
+
+/** First matching today line from Google Places weekday_text, or the first line. */
+export function formatHoursPreview(hours: string): string {
+  const lines = hours
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return "";
+
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const today = dayNames[new Date().getDay()];
+  const todayLine = lines.find((line) =>
+    line.toLowerCase().startsWith(today.toLowerCase())
+  );
+
+  return todayLine ?? lines[0];
+}
+
 export function excerpt(text: string | null, maxLength = 120): string {
   if (!text) return "";
   if (text.length <= maxLength) return text;

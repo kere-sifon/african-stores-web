@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   deslugify,
   excerpt,
+  formatHoursPreview,
   formatPhone,
   getCategoryColor,
+  hasStoreHours,
   parseFilterParam,
   slugify,
 } from "@/lib/utils";
@@ -66,5 +68,24 @@ describe("excerpt", () => {
 describe("getCategoryColor", () => {
   it("falls back to Other for unknown categories", () => {
     expect(getCategoryColor("Unknown")).toContain("gray");
+  });
+});
+
+describe("hasStoreHours", () => {
+  it("returns false for null, empty, or whitespace", () => {
+    expect(hasStoreHours(null)).toBe(false);
+    expect(hasStoreHours("")).toBe(false);
+    expect(hasStoreHours("   ")).toBe(false);
+  });
+
+  it("returns true when hours text is present", () => {
+    expect(hasStoreHours("Monday: 9:00 AM – 5:00 PM")).toBe(true);
+  });
+});
+
+describe("formatHoursPreview", () => {
+  it("returns the first line when no day matches", () => {
+    const hours = "Monday: 9:00 AM – 5:00 PM\nTuesday: 10:00 AM – 6:00 PM";
+    expect(formatHoursPreview(hours)).toBe("Monday: 9:00 AM – 5:00 PM");
   });
 });

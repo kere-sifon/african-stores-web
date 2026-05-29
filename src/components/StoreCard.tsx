@@ -1,8 +1,14 @@
 import Link from "next/link";
-import { Globe, MapPin, Phone } from "lucide-react";
+import { Clock, Globe, MapPin, Phone } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
 import { IStore } from "@/lib/models/store";
-import { excerpt, formatPhone, slugify } from "@/lib/utils";
+import {
+  excerpt,
+  formatHoursPreview,
+  formatPhone,
+  hasStoreHours,
+  slugify,
+} from "@/lib/utils";
 
 interface StoreCardProps {
   store: IStore;
@@ -39,6 +45,13 @@ export function StoreCard({ store }: StoreCardProps) {
         )}
       </div>
 
+      {hasStoreHours(store.hours) && (
+        <p className="mt-3 text-sm text-muted-foreground flex items-start gap-1.5 line-clamp-2">
+          <Clock className="h-3.5 w-3.5 shrink-0 mt-0.5 text-forest" aria-hidden />
+          <span>{formatHoursPreview(store.hours!)}</span>
+        </p>
+      )}
+
       {store.description && (
         <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
           {excerpt(store.description, 140)}
@@ -46,7 +59,7 @@ export function StoreCard({ store }: StoreCardProps) {
       )}
 
       {(store.phone || store.website) && (
-        <div className="mt-4 flex items-center gap-3 border-t border-border-warm pt-3 text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border-warm pt-3 text-muted-foreground">
           {store.phone && (
             <span className="inline-flex items-center gap-1 text-xs" title={formatPhone(store.phone)}>
               <Phone className="h-3.5 w-3.5" aria-hidden />
