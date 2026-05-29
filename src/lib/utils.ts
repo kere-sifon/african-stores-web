@@ -47,6 +47,9 @@ const KNOWN_CITIES = [
   "Richmond Hill",
   "Oakville",
   "Burlington",
+  "Niagara Falls",
+  "North York",
+  "St. Catharines",
 ];
 
 function toKebab(value: string): string {
@@ -57,7 +60,7 @@ function toKebab(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function titleCaseWords(value: string): string {
+export function titleCaseWords(value: string): string {
   return value
     .split(/\s+/)
     .filter(Boolean)

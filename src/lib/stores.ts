@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/db";
 import Store, { IStore, toIStore } from "@/lib/models/store";
-import { deslugify, slugify } from "@/lib/utils";
+import { deslugify, slugify, titleCaseWords } from "@/lib/utils";
 
 import { STORES_PER_PAGE } from "@/lib/constants";
 
@@ -126,6 +126,42 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** Try name/city splits when deslugify mis-parses multi-word cities (e.g. Niagara Falls). */
+async function findStoreBySlugSplits(
+  normalizedSlug: string,
+  select: string
+): Promise<IStore | null> {
+  const parts = normalizedSlug.split("-");
+  if (parts.length < 2) return null;
+
+  for (let cityPartCount = parts.length - 1; cityPartCount >= 1; cityPartCount--) {
+    const namePartCount = parts.length - cityPartCount;
+    if (namePartCount < 1) continue;
+
+    const city = titleCaseWords(
+      parts.slice(namePartCount).join("-").replace(/-/g, " ")
+    );
+    const name = titleCaseWords(
+      parts.slice(0, namePartCount).join("-").replace(/-/g, " ")
+    );
+
+    const byLower = await Store.findOne(
+      withContactableFilter({
+        name_lower: name.toLowerCase(),
+        city_lower: city.toLowerCase(),
+      })
+    )
+      .select(select)
+      .lean();
+
+    if (byLower && hasRequiredContactInfo(byLower)) {
+      return toIStore(byLower);
+    }
+  }
+
+  return null;
+}
+
 export async function getStoreBySlug(slug: string): Promise<IStore | null> {
   await connectDB();
 
@@ -174,7 +210,7 @@ export async function getStoreBySlug(slug: string): Promise<IStore | null> {
     }
   }
 
-  return null;
+  return findStoreBySlugSplits(normalizedSlug, select);
 }
 
 export async function getStats(): Promise<{
