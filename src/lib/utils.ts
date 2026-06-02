@@ -124,6 +124,34 @@ export function getCategoryColor(category: string): string {
   return categoryColors[category] ?? categoryColors.Other;
 }
 
+export function formatStoreAddress(store: {
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postal_code?: string | null;
+}): string {
+  return [store.address, store.city, store.province, store.postal_code]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+/** Google Maps search URL (works on web and mobile). */
+export function googleMapsSearchUrl(query: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+export function googleMapsUrlForStore(store: {
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postal_code?: string | null;
+}): string | null {
+  const formatted = formatStoreAddress(store);
+  if (!formatted) return null;
+  return googleMapsSearchUrl(formatted);
+}
+
 export function hasStoreHours(hours: string | null | undefined): boolean {
   return Boolean(hours?.trim());
 }

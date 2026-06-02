@@ -4,7 +4,9 @@ import {
   excerpt,
   formatHoursPreview,
   formatPhone,
+  formatStoreAddress,
   getCategoryColor,
+  googleMapsUrlForStore,
   hasStoreHours,
   parseFilterParam,
   slugify,
@@ -84,6 +86,43 @@ describe("getCategoryColor", () => {
   });
 });
 
+describe("formatStoreAddress", () => {
+  it("joins address fields for display", () => {
+    expect(
+      formatStoreAddress({
+        address: "123 Main St",
+        city: "Toronto",
+        province: "ON",
+        postal_code: "M5V 1A1",
+      })
+    ).toBe("123 Main St, Toronto, ON, M5V 1A1");
+  });
+});
+
+describe("googleMapsUrlForStore", () => {
+  it("builds a Google Maps search URL from address fields only", () => {
+    const url = googleMapsUrlForStore({
+      address: "100 Queen St W",
+      city: "Toronto",
+      province: "ON",
+    });
+    expect(url).toContain("google.com/maps/search");
+    expect(url).toContain(encodeURIComponent("100 Queen St W"));
+    expect(url).not.toContain(encodeURIComponent("Restaurant"));
+  });
+
+  it("returns null when no address parts exist", () => {
+    expect(
+      googleMapsUrlForStore({
+        address: null,
+        city: null,
+        province: null,
+        postal_code: null,
+      })
+    ).toBeNull();
+  });
+});
+
 describe("hasStoreHours", () => {
   it("returns false for null, empty, or whitespace", () => {
     expect(hasStoreHours(null)).toBe(false);
@@ -97,8 +136,24 @@ describe("hasStoreHours", () => {
 });
 
 describe("formatHoursPreview", () => {
-  it("returns the first line when no day matches", () => {
-    const hours = "Monday: 9:00 AM – 5:00 PM\nTuesday: 10:00 AM – 6:00 PM";
-    expect(formatHoursPreview(hours)).toBe("Monday: 9:00 AM – 5:00 PM");
+  it("returns today's line when present", () => {
+    const dayNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const today = dayNames[new Date().getDay()];
+    const hours = `${today}: 9:00 AM – 5:00 PM\nMonday: 10:00 AM – 6:00 PM`;
+    expect(formatHoursPreview(hours)).toBe(`${today}: 9:00 AM – 5:00 PM`);
+  });
+
+  it("returns the first line when today is not listed", () => {
+    const hours =
+      "Notaday: 8:00 AM – 4:00 PM\nMonday: 10:00 AM – 6:00 PM";
+    expect(formatHoursPreview(hours)).toBe("Notaday: 8:00 AM – 4:00 PM");
   });
 });
