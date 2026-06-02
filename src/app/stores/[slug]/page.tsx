@@ -14,7 +14,13 @@ import {
   getAllStoreSlugs,
   getStoreBySlug,
 } from "@/lib/stores";
-import { formatHoursPreview, formatPhone, hasStoreHours } from "@/lib/utils";
+import {
+  formatHoursPreview,
+  formatPhone,
+  formatStoreAddress,
+  googleMapsUrlForStore,
+  hasStoreHours,
+} from "@/lib/utils";
 
 export const dynamic = "force-static";
 export const dynamicParams = true;
@@ -52,12 +58,8 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
     notFound();
   }
 
-  const addressParts = [
-    store.address,
-    store.city,
-    store.province,
-    store.postal_code,
-  ].filter(Boolean);
+  const formattedAddress = formatStoreAddress(store);
+  const mapsUrl = googleMapsUrlForStore(store);
 
   const websiteUrl = store.website
     ? store.website.startsWith("http")
@@ -117,14 +119,30 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
       </header>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2">
-        {addressParts.length > 0 && (
+        {formattedAddress && (
           <div className="rounded-xl border border-border-warm bg-card-warm p-4">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
               Address
             </h2>
             <p className="text-ink flex gap-2">
               <MapPin className="h-4 w-4 shrink-0 text-forest mt-0.5" aria-hidden />
-              <span>{addressParts.join(", ")}</span>
+              {mapsUrl ? (
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-accent underline-offset-2 hover:underline inline-flex items-start gap-1.5"
+                >
+                  <span>{formattedAddress}</span>
+                  <ExternalLink
+                    className="h-3.5 w-3.5 shrink-0 mt-0.5 opacity-60"
+                    aria-hidden
+                  />
+                  <span className="sr-only"> (opens in Google Maps)</span>
+                </a>
+              ) : (
+                <span>{formattedAddress}</span>
+              )}
             </p>
           </div>
         )}

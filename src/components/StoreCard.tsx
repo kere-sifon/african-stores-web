@@ -1,14 +1,9 @@
 import Link from "next/link";
-import { Clock, Globe, MapPin, Phone } from "lucide-react";
+import { Clock, Globe, MapPin } from "lucide-react";
 import { CategoryBadge } from "@/components/CategoryBadge";
+import { StoreCardPhone } from "@/components/StoreCardPhone";
 import { IStore } from "@/lib/models/store";
-import {
-  excerpt,
-  formatHoursPreview,
-  formatPhone,
-  hasStoreHours,
-  slugify,
-} from "@/lib/utils";
+import { excerpt, formatHoursPreview, hasStoreHours, slugify } from "@/lib/utils";
 
 interface StoreCardProps {
   store: IStore;
@@ -59,17 +54,12 @@ export function StoreCard({ store }: StoreCardProps) {
       )}
 
       {(store.phone || store.website) && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border-warm pt-3 text-muted-foreground">
-          {store.phone && (
-            <span className="inline-flex items-center gap-1 text-xs" title={formatPhone(store.phone)}>
-              <Phone className="h-3.5 w-3.5" aria-hidden />
-              <span className="sr-only">Phone available</span>
-            </span>
-          )}
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border-warm pt-3 text-sm text-muted-foreground">
+          {store.phone && <StoreCardPhone phone={store.phone} />}
           {store.website && (
-            <span className="inline-flex items-center gap-1 text-xs">
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Globe className="h-3.5 w-3.5" aria-hidden />
-              <span className="sr-only">Website available</span>
+              <span>Website</span>
             </span>
           )}
         </div>
