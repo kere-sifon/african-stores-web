@@ -1,12 +1,13 @@
 # African Stores Canada
 
-Next.js 14 directory frontend for African grocery stores, markets, and specialty shops across Canada. Data is stored in MongoDB Atlas (populated by a separate Python crawler) and queried directly from Next.js Server Components and Route Handlers.
+Next.js 15 directory frontend for African grocery stores, markets, and specialty shops across Canada. Data is stored in MongoDB Atlas (populated by a separate Python crawler) and queried directly from Next.js Server Components and Route Handlers. Includes a password-protected `/ops` dashboard for crawl monitoring, eval/cost trends, and a human-in-the-loop review queue.
 
 ## Stack
 
 - Next.js 15 (App Router)
 - TypeScript
 - Tailwind CSS + shadcn/ui
+- Recharts (`/ops` eval and cost trend charts only — code-split, not loaded on the public site)
 - Mongoose
 - Vercel deployment
 
@@ -23,7 +24,7 @@ npm install
 
 # Environment
 cp .env.local.example .env.local
-# Add your MONGODB_URI and NEXT_PUBLIC_SITE_URL
+# Add your MONGODB_URI, NEXT_PUBLIC_SITE_URL, and OPS_PASSWORD
 
 # Verify MongoDB connection
 npm run verify:db
@@ -40,6 +41,7 @@ Open [http://localhost:3000](http://localhost:3000).
 |----------|-------------|
 | `MONGODB_URI` | MongoDB Atlas connection string |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL (e.g. `http://localhost:3000` or production domain) |
+| `OPS_PASSWORD` | Shared password gating `/ops/*` and `/api/v1/admin/*` (see [Ops dashboard](#ops-dashboard) below). If unset, those routes return `503` rather than opening up. |
 
 ## Branching
 
@@ -81,6 +83,11 @@ Details: [SECURITY.md](./SECURITY.md), [CONTRIBUTING.md](./CONTRIBUTING.md).
 | `/stores` | Filterable directory (`?city=&category=&region=&q=&page=`) |
 | `/stores/[slug]` | Store detail (slug: `name-city` kebab-case) |
 | `/cities/[city]` | All stores in a city |
+| `/ops` | Crawl status: province coverage, recent runs, review queue preview (password-protected) |
+| `/ops/evals` | Eval score trends — search precision, validator accuracy, storage new-insert rate (password-protected) |
+| `/ops/costs` | Token usage and Bedrock cost trends, by agent (password-protected) |
+| `/ops/review` | Review queue — approve/reject low-confidence stores flagged by the Validator Agent (password-protected) |
+| `/ops/login` | Password entry for the ops dashboard |
 
 ## API routes
 
@@ -88,6 +95,20 @@ Details: [SECURITY.md](./SECURITY.md), [CONTRIBUTING.md](./CONTRIBUTING.md).
 |-------|-------------|
 | `GET /api/stores` | Paginated stores (`city`, `category`, `region`, `q`, `page`, `limit`) |
 | `GET /api/stats` | Total stores, city counts, category counts |
+| `GET /api/v1/admin/ops-status` | Province coverage, recent crawls, review queue stats (password-protected) |
+| `GET /api/v1/admin/evals` | Eval score trend data, optional `?province=` filter (password-protected) |
+| `GET /api/v1/admin/costs` | Token/cost trend data, optional `?province=` filter (password-protected) |
+| `GET /api/v1/admin/review` | Review queue listing, `?status=pending\|approved\|rejected\|all` (password-protected) |
+| `POST /api/v1/admin/review/[id]/approve` | Approve a flagged store — saves it into `stores` (password-protected) |
+| `POST /api/v1/admin/review/[id]/reject` | Reject a flagged store — no save, optional `{ reason }` body (password-protected) |
+
+## Ops dashboard
+
+`/ops` and `/api/v1/admin/*` read from two collections the Python crawler agent writes to directly — `crawl_history` (eval scores, token/cost summaries, run health) and `pending_review` (low-confidence stores flagged by the Validator Agent for human review). The web app never writes to `crawl_history`; it only writes to `pending_review` (status updates on approve/reject) and `stores` (on approve).
+
+**Auth:** a single shared password via `src/middleware.ts`, not per-user accounts — appropriate for a solo-maintained internal dashboard, not a multi-tenant admin panel. Vercel's own Deployment Protection is whole-domain only on every plan (no path-level scoping), so it can't protect `/ops` without also gating the public site — this middleware exists specifically to work around that limitation. The middleware cookie stores a SHA-256 hash of the password, not the password itself, and fails closed (`503`) if `OPS_PASSWORD` isn't configured.
+
+**Local setup:** add `OPS_PASSWORD` to `.env.local` (see `.env.local.example`), then visit `http://localhost:3000/ops` — you'll be redirected to `/ops/login`.
 
 ## Deploy to Vercel
 
@@ -99,6 +120,7 @@ Production deploys **only from `main`**. The repo includes [`vercel.json`](verce
 4. Add environment variables:
    - `MONGODB_URI` — same Atlas URI as local
    - `NEXT_PUBLIC_SITE_URL` — your production URL (e.g. `https://your-app.vercel.app`)
+   - `OPS_PASSWORD` — strong, unique value for Production (not the `.env.local.example` default)
 5. Merge `develop` → `main` when ready to release; only that merge deploys production.
 
 **Note:** Ensure your MongoDB Atlas IP allowlist includes `0.0.0.0/0` (or Vercel’s IP ranges) so serverless functions can connect.
@@ -108,12 +130,20 @@ Production deploys **only from `main`**. The repo includes [`vercel.json`](verce
 ```
 src/
   app/              # Pages and API routes
+    ops/            # Status, evals, costs, review, login pages
+    api/v1/admin/   # Ops-status, evals, costs, review API routes
   components/       # UI components
+    ops/            # Ops dashboard components (nav, charts, review queue list)
   lib/
     db.ts           # Mongoose connection singleton
-    models/store.ts # Store schema + IStore type
-    stores.ts       # Data access functions
+    models/
+      store.ts          # Store schema + IStore type
+      crawlHistory.ts   # crawl_history schema (read-only — written by the Python agent)
+      pendingReview.ts  # pending_review schema (read + write — approve/reject actions)
+    stores.ts       # Public store directory data access
+    ops.ts          # Ops dashboard data access + approve/reject actions
     utils.ts        # slugify, formatPhone, category colors
+  middleware.ts      # Password gate for /ops and /api/v1/admin/*
 scripts/
   verify-db.ts      # Connection smoke test
 ```
