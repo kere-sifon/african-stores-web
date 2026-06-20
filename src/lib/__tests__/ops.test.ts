@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coverageStatus, type ProvinceCoverage } from "@/lib/ops";
+import { coverageStatus, validateReviewCandidate, type ProvinceCoverage } from "@/lib/ops";
 
 function entry(daysSince: number | null): ProvinceCoverage {
   return {
@@ -29,5 +29,54 @@ describe("coverageStatus", () => {
   it("returns 'stale' for a crawl older than 70 days", () => {
     expect(coverageStatus(entry(71))).toBe("stale");
     expect(coverageStatus(entry(365))).toBe("stale");
+  });
+});
+
+describe("validateReviewCandidate", () => {
+  it("rejects a candidate with no name", () => {
+    const error = validateReviewCandidate({ category: "Grocery", address: "1 St" });
+    expect(error).toMatch(/name/i);
+  });
+
+  it("rejects a candidate with no category", () => {
+    const error = validateReviewCandidate({ name: "Test Store", address: "1 St" });
+    expect(error).toMatch(/category/i);
+  });
+
+  it("rejects a candidate with no contact info", () => {
+    const error = validateReviewCandidate({
+      name: "Test Store",
+      category: "Grocery",
+    });
+    expect(error).toMatch(/address|phone|website/i);
+  });
+
+  it("accepts a candidate with name, category, and an address", () => {
+    const error = validateReviewCandidate({
+      name: "Test Store",
+      category: "Grocery",
+      address: "123 Main St",
+    });
+    expect(error).toBeNull();
+  });
+
+  it("accepts a candidate with only a phone as contact info", () => {
+    const error = validateReviewCandidate({
+      name: "Test Store",
+      category: "Grocery",
+      phone: "416-555-0100",
+    });
+    expect(error).toBeNull();
+  });
+
+  it("rejects a candidate with only whitespace contact fields", () => {
+    const error = validateReviewCandidate({
+      name: "Test Store",
+      category: "Grocery",
+      address: "   ",
+      phone: "\t",
+      website: "",
+    });
+    expect(error).toMatch(/address|phone|website/i);
   });
 });

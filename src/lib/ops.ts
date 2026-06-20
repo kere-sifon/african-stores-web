@@ -4,7 +4,12 @@ import CrawlHistory, {
   toICrawlHistory,
 } from "@/lib/models/crawlHistory";
 import { toIPendingReview } from "@/lib/models/pendingReview";
-import PendingReview from "@/lib/models/pendingReview";
+import PendingReview, {
+  IPendingReviewStore,
+  ReviewStatus,
+} from "@/lib/models/pendingReview";
+import Store from "@/lib/models/store";
+import { slugify } from "@/lib/utils";
 
 /**
  * PROVINCE_ROTATION mirrors provinces.py's PROVINCE_ROTATION list exactly.
@@ -288,4 +293,213 @@ export async function getOpsOverview(): Promise<OpsOverview> {
     ]);
 
   return { coverage, recentCrawls, reviewStats, recentReviews };
+}
+
+/**
+ * Full review queue listing for the /ops/review page — all pending entries
+ * by default, or filter by status to see history. Unlike
+ * getRecentPendingReviews (used for the small status-page preview), this
+ * has no hard limit beyond the page-level `limit` param, since the review
+ * queue page is meant to be worked through in full.
+ */
+export async function getReviewQueue(
+  status: ReviewStatus | "all" = "pending",
+  limit = 100
+) {
+  await connectDB();
+
+  const query = status === "all" ? {} : { status };
+  const docs = await PendingReview.find(query)
+    .sort({ created_at: -1 })
+    .limit(limit)
+    .lean();
+
+  return docs.map((doc) => toIPendingReview(doc));
+}
+
+export interface ReviewActionResult {
+  success: boolean;
+  message: string;
+}
+
+/** Safely coerce an unknown candidate field to a non-empty string, or null. */
+function asStringOrNull(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+/** Safely coerce an unknown candidate field to a string array. */
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === "string")
+    : [];
+}
+
+/**
+ * Validate a candidate store has the minimum fields needed to save —
+ * mirrors models.StoreInfo's required fields (name, category) plus the
+ * same contact-info quality gate tools.py's store_meets_quality enforces
+ * (at least one of address/phone/website). Returns an error message if
+ * invalid, or null if the candidate passes.
+ */
+export function validateReviewCandidate(
+  store: IPendingReviewStore
+): string | null {
+  if (!store.name || !store.name.trim()) {
+    return "Candidate is missing a name";
+  }
+  if (!store.category || !store.category.trim()) {
+    return "Candidate is missing a category";
+  }
+  const hasContact = Boolean(
+    store.address?.trim() || store.phone?.trim() || store.website?.trim()
+  );
+  if (!hasContact) {
+    return "Candidate has no address, phone, or website";
+  }
+  return null;
+}
+
+/**
+ * Approve a pending review: validates the candidate, upserts it into the
+ * main stores collection (same name_lower+city_lower dedup key the Python
+ * agent uses — see storage_mongo.py's save_store), then marks the review
+ * approved. Mirrors pending_review.approve_review's behavior exactly,
+ * including the race-condition guard (only proceeds if status is still
+ * "pending" at update time) and refusing to re-approve an already-decided
+ * review.
+ */
+export async function approveReview(
+  reviewId: string,
+  reviewedBy = "ops-dashboard"
+): Promise<ReviewActionResult> {
+  await connectDB();
+
+  const review = await PendingReview.findById(reviewId);
+  if (!review) {
+    return { success: false, message: `Review ${reviewId} not found` };
+  }
+  if (review.status !== "pending") {
+    return {
+      success: false,
+      message: `Review ${reviewId} already ${review.status}`,
+    };
+  }
+
+  const candidate = review.store;
+  const validationError = validateReviewCandidate(candidate);
+  if (validationError) {
+    return { success: false, message: validationError };
+  }
+
+  const name = candidate.name as string;
+  const city = (candidate.city as string) ?? review.city;
+  const nameLower = name.trim().toLowerCase();
+  const cityLower = (city ?? "").trim().toLowerCase();
+
+  const existing = await Store.findOne({
+    name_lower: nameLower,
+    city_lower: cityLower,
+  }).select("_id");
+
+  if (existing) {
+    // Already in the directory (e.g. saved by a later crawl before this
+    // review was actioned) — mark the review approved without a duplicate
+    // insert, matching save_store's "Already in database" outcome.
+    const result = await PendingReview.updateOne(
+      { _id: reviewId, status: "pending" },
+      {
+        $set: {
+          status: "approved",
+          reviewed_at: new Date(),
+          reviewed_by: reviewedBy,
+        },
+      }
+    );
+    if (result.matchedCount === 0) {
+      return {
+        success: false,
+        message: `Review ${reviewId} was updated by someone else — refresh and retry`,
+      };
+    }
+    return {
+      success: true,
+      message: `${name} (${city}) was already in the directory — review marked approved`,
+    };
+  }
+
+  await Store.create({
+    name,
+    category: candidate.category,
+    region_focus: asStringOrNull(candidate.region_focus),
+    address: asStringOrNull(candidate.address),
+    city: city ?? null,
+    province: asStringOrNull(candidate.province),
+    postal_code: asStringOrNull(candidate.postal_code),
+    phone: asStringOrNull(candidate.phone),
+    website: asStringOrNull(candidate.website),
+    email: asStringOrNull(candidate.email),
+    hours: asStringOrNull(candidate.hours),
+    description: asStringOrNull(candidate.description),
+    products_and_specialties: asStringArray(candidate.products_and_specialties),
+    source_url: asStringOrNull(candidate.source_url),
+    slug: slugify(name, city ?? ""),
+    name_lower: nameLower,
+    city_lower: cityLower,
+  });
+
+  const result = await PendingReview.updateOne(
+    { _id: reviewId, status: "pending" },
+    {
+      $set: {
+        status: "approved",
+        reviewed_at: new Date(),
+        reviewed_by: reviewedBy,
+      },
+    }
+  );
+
+  if (result.matchedCount === 0) {
+    // Store was already saved above — don't report this as a failure,
+    // mirroring approve_review's same "saved but status update failed"
+    // tolerance.
+    return {
+      success: true,
+      message: `Saved ${name} (${city}), but review status update raced — refresh to confirm`,
+    };
+  }
+
+  return { success: true, message: `Approved and saved: ${name} (${city})` };
+}
+
+/**
+ * Reject a pending review: marks it rejected, never writes to the main
+ * stores collection. Mirrors pending_review.reject_review exactly.
+ */
+export async function rejectReview(
+  reviewId: string,
+  reviewedBy = "ops-dashboard",
+  reason = ""
+): Promise<ReviewActionResult> {
+  await connectDB();
+
+  const result = await PendingReview.updateOne(
+    { _id: reviewId, status: "pending" },
+    {
+      $set: {
+        status: "rejected",
+        reviewed_at: new Date(),
+        reviewed_by: reviewedBy,
+        rejection_reason: reason,
+      },
+    }
+  );
+
+  if (result.matchedCount === 0) {
+    return {
+      success: false,
+      message: `Review ${reviewId} not found or not pending`,
+    };
+  }
+
+  return { success: true, message: `Rejected review ${reviewId}` };
 }
