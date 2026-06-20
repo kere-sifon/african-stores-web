@@ -142,6 +142,132 @@ export function coverageStatus(entry: ProvinceCoverage): CoverageStatus {
   return "stale";
 }
 
+export interface EvalTrendPoint {
+  id: string;
+  province: string;
+  date: string; // ISO date string, for chart x-axis
+  search_precision: number;
+  validator_accuracy: number;
+  storage_new_insert_rate: number;
+  total_saved: number;
+  total_errors: number;
+  runs_evaluated: number;
+}
+
+/**
+ * Eval scores across crawl_history records, oldest first (chart-friendly
+ * chronological order — opposite of getRecentCrawls, which is newest-first
+ * for a "recent activity" list). Only records with eval_summary populated
+ * are included; older records predating the eval-loop feature are skipped
+ * rather than rendered as zero, which would be misleading on a trend chart.
+ */
+export async function getEvalTrend(
+  province?: string,
+  limit = 50
+): Promise<EvalTrendPoint[]> {
+  await connectDB();
+
+  const query: Record<string, unknown> = { eval_summary: { $ne: null } };
+  if (province) query.province = province;
+
+  const docs = await CrawlHistory.find(query)
+    .sort({ last_crawled_at: -1 })
+    .limit(limit)
+    .lean();
+
+  return docs
+    .map((doc) => {
+      const evalSummary = doc.eval_summary as
+        | ICrawlHistory["eval_summary"]
+        | undefined;
+      if (!evalSummary) return null;
+      return {
+        id: String(doc._id),
+        province: doc.province as string,
+        date: doc.last_crawled_at
+          ? new Date(doc.last_crawled_at as Date).toISOString().slice(0, 10)
+          : "",
+        search_precision: evalSummary.averages.search_precision,
+        validator_accuracy: evalSummary.averages.validator_accuracy,
+        storage_new_insert_rate: evalSummary.averages.storage_new_insert_rate,
+        total_saved: evalSummary.totals.total_saved,
+        total_errors: evalSummary.totals.total_errors,
+        runs_evaluated: evalSummary.counts,
+      };
+    })
+    .filter((point): point is EvalTrendPoint => point !== null)
+    .reverse(); // oldest first for chart x-axis
+}
+
+export interface CostTrendPoint {
+  id: string;
+  province: string;
+  date: string;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_tokens: number;
+  total_cost_usd: number;
+  search_cost_usd: number;
+  validate_cost_usd: number;
+  storage_cost_usd: number;
+}
+
+/**
+ * Token/cost data across crawl_history records, oldest first. Only records
+ * with token_usage_summary populated are included — same reasoning as
+ * getEvalTrend: skip pre-feature records rather than show misleading zeros.
+ */
+export async function getCostTrend(
+  province?: string,
+  limit = 50
+): Promise<CostTrendPoint[]> {
+  await connectDB();
+
+  const query: Record<string, unknown> = { token_usage_summary: { $ne: null } };
+  if (province) query.province = province;
+
+  const docs = await CrawlHistory.find(query)
+    .sort({ last_crawled_at: -1 })
+    .limit(limit)
+    .lean();
+
+  return docs
+    .map((doc) => {
+      const usage = doc.token_usage_summary as
+        | ICrawlHistory["token_usage_summary"]
+        | undefined;
+      if (!usage) return null;
+      const byAgent = usage.by_agent ?? {};
+      return {
+        id: String(doc._id),
+        province: doc.province as string,
+        date: doc.last_crawled_at
+          ? new Date(doc.last_crawled_at as Date).toISOString().slice(0, 10)
+          : "",
+        total_input_tokens: usage.total_input_tokens,
+        total_output_tokens: usage.total_output_tokens,
+        total_tokens: usage.total_tokens,
+        total_cost_usd: usage.total_cost_usd,
+        search_cost_usd: byAgent.search?.cost_usd ?? 0,
+        validate_cost_usd: byAgent.validate?.cost_usd ?? 0,
+        storage_cost_usd: byAgent.storage?.cost_usd ?? 0,
+      };
+    })
+    .filter((point): point is CostTrendPoint => point !== null)
+    .reverse();
+}
+
+/** Distinct provinces that have eval_summary or token_usage_summary data, for a filter dropdown. */
+export async function getProvincesWithTrendData(): Promise<string[]> {
+  await connectDB();
+
+  const provinces = await CrawlHistory.distinct("province", {
+    $or: [{ eval_summary: { $ne: null } }, { token_usage_summary: { $ne: null } }],
+  });
+
+  return (provinces as string[]).sort((a, b) => a.localeCompare(b));
+}
+
 export interface OpsOverview {
   coverage: ProvinceCoverage[];
   recentCrawls: ICrawlHistory[];
