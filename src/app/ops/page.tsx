@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OpsNav } from "@/components/ops/OpsNav";
 import { OpsStatusOverview } from "@/components/ops/OpsStatusOverview";
 import { getOpsOverview, type OpsOverview } from "@/lib/ops";
 
@@ -49,6 +50,7 @@ async function OpsContent() {
           Stores Canada crawler.
         </p>
       </div>
+      <OpsNav />
       {loadFailed && (
         <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           Couldn&apos;t load operational data right now. The database may be
