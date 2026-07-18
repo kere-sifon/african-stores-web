@@ -9,6 +9,7 @@ Next.js 15 directory frontend for African grocery stores, markets, and specialty
 - Tailwind CSS + shadcn/ui
 - Recharts (`/ops` eval and cost trend charts only — code-split, not loaded on the public site)
 - Mongoose
+- Sentry (`@sentry/nextjs`)
 - Vercel deployment
 
 ## Prerequisites
@@ -42,6 +43,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `MONGODB_URI` | MongoDB Atlas connection string |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL (e.g. `http://localhost:3000` or production domain) |
 | `OPS_PASSWORD` | Shared password gating `/ops/*` and `/api/v1/admin/*` (see [Ops dashboard](#ops-dashboard) below). If unset, those routes return `503` rather than opening up. |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry DSN for error monitoring (org: `quephase-gm`, project: `javascript-nextjs`) |
+| `SENTRY_AUTH_TOKEN` | Sentry auth token for uploading source maps on build (Vercel/CI) |
 
 ## Branching
 
