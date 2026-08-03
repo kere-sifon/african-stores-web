@@ -153,7 +153,7 @@ describe("formatHoursPreview", () => {
 
   it("returns the first line when today is not listed", () => {
     const hours =
-      "Notaday: 8:00 AM – 4:00 PM\nMonday: 10:00 AM – 6:00 PM";
+      "Notaday: 8:00 AM – 4:00 PM\nAlsoNotADay: 10:00 AM – 6:00 PM";
     expect(formatHoursPreview(hours)).toBe("Notaday: 8:00 AM – 4:00 PM");
   });
 });
