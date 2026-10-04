@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Building2, MapPin, Store } from "lucide-react";
+import { CategoryCloud } from "@/components/CategoryCloud";
 import { SearchBar } from "@/components/SearchBar";
 import { StatCard } from "@/components/StatCard";
 import { StoreGrid } from "@/components/StoreGrid";
@@ -7,7 +8,6 @@ import {
   getRecentStores,
   getStats,
 } from "@/lib/stores";
-import { getCategoryColor } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -109,20 +109,10 @@ export default async function HomePage() {
 
       {!isEmpty && stats.categories.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
-          <h2 className="font-heading text-2xl font-semibold text-ink mb-4">
+          <h2 className="font-heading text-2xl font-semibold text-ink mb-6 text-center sm:text-left">
             Browse by category
           </h2>
-          <div className="flex flex-wrap gap-2">
-            {stats.categories.map(({ category }) => (
-              <Link
-                key={category}
-                href={`/stores?category=${encodeURIComponent(category)}`}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-opacity hover:opacity-80 ${getCategoryColor(category)}`}
-              >
-                {category}
-              </Link>
-            ))}
-          </div>
+          <CategoryCloud categories={stats.categories} />
         </section>
       )}
 
