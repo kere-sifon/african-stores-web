@@ -108,8 +108,8 @@ export default async function HomePage() {
       )}
 
       {!isEmpty && stats.categories.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
-          <h2 className="font-heading text-2xl font-semibold text-ink mb-6 text-center sm:text-left">
+        <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+          <h2 className="font-heading text-2xl font-semibold text-ink mb-3">
             Browse by category
           </h2>
           <CategoryCloud categories={stats.categories} />
